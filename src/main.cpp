@@ -14,6 +14,23 @@ using namespace vex;
 // A global instance of competition
 competition Competition;
 
+// PIN DEFINITIONS
+
+int intakeMotorPort = 1; // Intake motor port
+int liftMotorPort = 2; // Lift motor port
+
+int intakeSpeed = 80; // Intake speed percentage
+int liftSpeed = 40; // Lift speed percentage
+
+bool intakeReversed = false; // Intake direction flag
+bool liftLeftReversed = false; // Lift direction flag
+bool liftRightReversed = false; // Lift direction flag
+
+// DEVICES
+motor Intake(intakeMotorPort, gearSetting::ratio18_1, intakeReversed);
+motor liftLeft(liftMotorPort, gearSetting::ratio18_1, liftLeftReversed);
+motor liftRight(liftMotorPort, gearSetting::ratio18_1, liftRightReversed);
+
 // define your global instances of motors and other devices here
 
 /*---------------------------------------------------------------------------*/
@@ -30,6 +47,9 @@ void pre_auton(void) {
 
   // All activities that occur before the competition starts
   // Example: clearing encoders, setting servo positions, ...
+  Intake.setStopping(brakeType::coast);
+  liftLeft.setStopping(brakeType::hold);
+  liftRight.setStopping(brakeType::hold);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -59,19 +79,31 @@ void autonomous(void) {
 /*---------------------------------------------------------------------------*/
 
 void usercontrol(void) {
-  // User control code here, inside the loop
-  while (1) {
-    // This is the main execution loop for the user control program.
-    // Each time through the loop your program should update motor + servo
-    // values based on feedback from the joysticks.
+  while (true) {
 
-    // ........................................................................
-    // Insert user code here. This is where you use the joystick values to
-    // update your motors, etc.
-    // ........................................................................
+    // Intake
+    if (Controller1.ButtonR1.pressing()) {
+      Intake.spin(directionType::fwd, INTAKE_SPEED,
+                  velocityUnits::pct);
+    } else if (Controller1.ButtonR2.pressing()) {
+      Intake.spin(directionType::rev, INTAKE_SPEED,
+                  velocityUnits::pct);
+    } else {
+      Intake.stop();
+    }
 
-    wait(20, msec); // Sleep the task for a short amount of time to
-                    // prevent wasted resources.
+    // Two-motor cascade lift
+    if (Controller1.ButtonL1.pressing()) {
+      Lift.spin(directionType::fwd, LIFT_SPEED,
+                velocityUnits::pct);
+    } else if (Controller1.ButtonL2.pressing()) {
+      Lift.spin(directionType::rev, LIFT_SPEED,
+                velocityUnits::pct);
+    } else {
+      Lift.stop(brakeType::hold);
+    }
+
+    wait(20, msec);
   }
 }
 
