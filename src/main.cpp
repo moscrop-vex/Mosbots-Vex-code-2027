@@ -11,6 +11,10 @@
 
 using namespace vex;
 
+// vex system devices
+Brain Brain;
+controller Controller1 = controller(primary);
+
 // A global instance of competition
 competition Competition;
 
