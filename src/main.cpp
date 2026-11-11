@@ -16,20 +16,22 @@ competition Competition;
 
 // PIN DEFINITIONS
 
-int intakeMotorPort = 1; // Intake motor port
-int liftMotorPort = 2; // Lift motor port
+int intakeMotorPort = 1;  // Intake motor port
+int liftMotorPort = 2;    // Lift motor port
+int pneumaticPort = 1;    // Pneumatic solenoid port on the brain
 
-int intakeSpeed = 80; // Intake speed percentage
-int liftSpeed = 40; // Lift speed percentage
+int intakeSpeed = 80;     // Intake speed percentage
+int liftSpeed = 40;       // Lift speed percentage
 
-bool intakeReversed = false; // Intake direction flag
-bool liftLeftReversed = false; // Lift direction flag
-bool liftRightReversed = false; // Lift direction flag
+bool intakeReversed = false;      // Intake direction flag
+bool liftLeftReversed = false;    // Lift direction flag
+bool liftRightReversed = false;   // Lift direction flag
 
 // DEVICES
 motor Intake(intakeMotorPort, gearSetting::ratio18_1, intakeReversed);
 motor liftLeft(liftMotorPort, gearSetting::ratio18_1, liftLeftReversed);
 motor liftRight(liftMotorPort, gearSetting::ratio18_1, liftRightReversed);
+digital_out Pneumatics(Brain.ThreeWirePort.A);
 
 // define your global instances of motors and other devices here
 
@@ -50,6 +52,7 @@ void pre_auton(void) {
   Intake.setStopping(brakeType::coast);
   liftLeft.setStopping(brakeType::hold);
   liftRight.setStopping(brakeType::hold);
+  Pneumatics.set(false);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -83,24 +86,30 @@ void usercontrol(void) {
 
     // Intake
     if (Controller1.ButtonR1.pressing()) {
-      Intake.spin(directionType::fwd, INTAKE_SPEED,
-                  velocityUnits::pct);
+      Intake.spin(directionType::fwd, intakeSpeed, velocityUnits::pct);
     } else if (Controller1.ButtonR2.pressing()) {
-      Intake.spin(directionType::rev, INTAKE_SPEED,
-                  velocityUnits::pct);
+      Intake.spin(directionType::rev, intakeSpeed, velocityUnits::pct);
     } else {
       Intake.stop();
     }
 
     // Two-motor cascade lift
     if (Controller1.ButtonL1.pressing()) {
-      Lift.spin(directionType::fwd, LIFT_SPEED,
-                velocityUnits::pct);
+      liftLeft.spin(directionType::fwd, liftSpeed, velocityUnits::pct);
+      liftRight.spin(directionType::fwd, liftSpeed, velocityUnits::pct);
     } else if (Controller1.ButtonL2.pressing()) {
-      Lift.spin(directionType::rev, LIFT_SPEED,
-                velocityUnits::pct);
+      liftLeft.spin(directionType::rev, liftSpeed, velocityUnits::pct);
+      liftRight.spin(directionType::rev, liftSpeed, velocityUnits::pct);
     } else {
-      Lift.stop(brakeType::hold);
+      liftLeft.stop(brakeType::hold);
+      liftRight.stop(brakeType::hold);
+    }
+
+    // Pneumatic actuator
+    if (Controller1.ButtonA.pressing()) {
+      Pneumatics.set(true);
+    } else if (Controller1.ButtonB.pressing()) {
+      Pneumatics.set(false);
     }
 
     wait(20, msec);
