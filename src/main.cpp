@@ -118,8 +118,9 @@ void autonomous(void) {
 
 void usercontrol(void) {
   while (true) {
-    int driveY = Controller1.Axis2.position();
-    int turnX = Controller1.Axis4.position();
+    // Use the right stick for forward/back and the left stick for turning.
+    int driveY = Controller1.Axis3.position();
+    int turnX = Controller1.Axis1.position();
 
     driveTank(driveY, turnX);
 
