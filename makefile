@@ -1,5 +1,11 @@
 # VEXcode makefile 2019_03_26_01
 
+# Ensure the VEX ARM toolchain is on PATH even when make is run from a plain shell
+VEX_TOOLCHAIN_BIN := $(HOME)/.config/Code/User/globalStorage/vexrobotics.vexcode/tools/cpp/toolchain_linux64/gcc/bin
+ifneq ($(wildcard $(VEX_TOOLCHAIN_BIN)/arm-none-eabi-ld),)
+export PATH := $(VEX_TOOLCHAIN_BIN):$(PATH)
+endif
+
 # show compiler output
 VERBOSE = 0
 
