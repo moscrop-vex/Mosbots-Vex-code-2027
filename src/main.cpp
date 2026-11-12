@@ -36,11 +36,52 @@ motor ClawUpDownMotor(vex::PORT3, vex::ratio36_1, false);  // claw up/down (red 
 // Claw open/close servo on three wire port H
 servo ClawServo(Brain.ThreeWirePort.H);
 
+constexpr double kDriveDeadband = 8.0;
+constexpr double kDriveScale = 0.85;
+constexpr int kDriveMaxPct = 100;
+
+inline double clampPct(double value) {
+  if (value > kDriveMaxPct) {
+    return kDriveMaxPct;
+  }
+  if (value < -kDriveMaxPct) {
+    return -kDriveMaxPct;
+  }
+  return value;
+}
+
+inline double applyDeadband(int input) {
+  if (input > -kDriveDeadband && input < kDriveDeadband) {
+    return 0.0;
+  }
+  return static_cast<double>(input);
+}
+
+inline void driveTank(int forward, int turn) {
+  double leftSpeed = clampPct((applyDeadband(forward) + applyDeadband(turn)) * kDriveScale);
+  double rightSpeed = clampPct((applyDeadband(forward) - applyDeadband(turn)) * kDriveScale);
+
+  DriveLeft1.spin(directionType::fwd, leftSpeed, velocityUnits::pct);
+  DriveLeft2.spin(directionType::fwd, leftSpeed, velocityUnits::pct);
+  DriveRight1.spin(directionType::fwd, rightSpeed, velocityUnits::pct);
+  DriveRight2.spin(directionType::fwd, rightSpeed, velocityUnits::pct);
+}
+
+inline void setLiftMotor(motor &motorRef, bool up, bool down, int speed) {
+  if (up) {
+    motorRef.spin(directionType::fwd, speed, velocityUnits::pct);
+  } else if (down) {
+    motorRef.spin(directionType::rev, speed, velocityUnits::pct);
+  } else {
+    motorRef.stop();
+  }
+}
+
 // Motor speed constants
-int driveSpeed = 75;
-int liftSpeed = 60;
-int intakeSpeed = 80;
-int clawSpeed = 40;
+constexpr int driveSpeed = 75;
+constexpr int liftSpeed = 60;
+constexpr int intakeSpeed = 80;
+constexpr int clawSpeed = 40;
 
 // Claw state
 bool clawOpen = false;
@@ -78,41 +119,19 @@ void autonomous(void) {
 
 void usercontrol(void) {
   while (true) {
-    // Drive control - right stick up/down for forward/back, left stick left/right to turn
     int driveY = Controller1.Axis2.position();
     int turnX = Controller1.Axis4.position();
-    
-    double leftSpeed = driveY + turnX;
-    double rightSpeed = driveY - turnX;
-    
-    DriveLeft1.spin(directionType::fwd, leftSpeed * 0.85, velocityUnits::pct);
-    DriveLeft2.spin(directionType::fwd, leftSpeed * 0.85, velocityUnits::pct);
-    DriveRight1.spin(directionType::fwd, rightSpeed * 0.85, velocityUnits::pct);
-    DriveRight2.spin(directionType::fwd, rightSpeed * 0.85, velocityUnits::pct);
-    
-    // Lift control - R1 raises both, R2 lowers both, A/B/X/Y trim each side
+
+    driveTank(driveY, turnX);
+
     bool leftUp = Controller1.ButtonR1.pressing() || Controller1.ButtonA.pressing();
     bool leftDown = Controller1.ButtonR2.pressing() || Controller1.ButtonX.pressing();
     bool rightUp = Controller1.ButtonR1.pressing() || Controller1.ButtonB.pressing();
     bool rightDown = Controller1.ButtonR2.pressing() || Controller1.ButtonY.pressing();
-    
-    if (leftUp) {
-      LeftLift.spin(directionType::fwd, liftSpeed, velocityUnits::pct);
-    } else if (leftDown) {
-      LeftLift.spin(directionType::rev, liftSpeed, velocityUnits::pct);
-    } else {
-      LeftLift.stop();
-    }
-    
-    if (rightUp) {
-      RightLift.spin(directionType::fwd, liftSpeed, velocityUnits::pct);
-    } else if (rightDown) {
-      RightLift.spin(directionType::rev, liftSpeed, velocityUnits::pct);
-    } else {
-      RightLift.stop();
-    }
-    
-    // Intake control - L1 intake in, L2 intake out
+
+    setLiftMotor(LeftLift, leftUp, leftDown, liftSpeed);
+    setLiftMotor(RightLift, rightUp, rightDown, liftSpeed);
+
     if (Controller1.ButtonL1.pressing()) {
       IntakeMotor.spin(directionType::fwd, intakeSpeed, velocityUnits::pct);
     } else if (Controller1.ButtonL2.pressing()) {
@@ -120,26 +139,27 @@ void usercontrol(void) {
     } else {
       IntakeMotor.stop();
     }
-    
-    // Claw up/down - up arrow raises, down arrow lowers
+
     if (Controller1.ButtonUp.pressing()) {
       ClawUpDownMotor.spin(directionType::fwd, clawSpeed, velocityUnits::pct);
     } else if (Controller1.ButtonDown.pressing()) {
       ClawUpDownMotor.spin(directionType::rev, clawSpeed, velocityUnits::pct);
     } else {
-      // Actively hold position whenever the claw stops moving
       ClawUpDownMotor.stop(brakeType::hold);
     }
-    
-    // Claw open/close - left arrow toggles
-    if (Controller1.ButtonLeft.pressing() && !clawPressed) {
+
+    if (Controller1.ButtonRight.pressing()) {
+      clawOpen = true;
+      ClawServo.setPosition(100, percentUnits::pct);
+      clawPressed = false;
+    } else if (Controller1.ButtonLeft.pressing() && !clawPressed) {
       clawPressed = true;
       clawOpen = !clawOpen;
       ClawServo.setPosition(clawOpen ? 100 : 0, percentUnits::pct);
-    } else if (!Controller1.ButtonLeft.pressing()) {
+    } else if (!Controller1.ButtonLeft.pressing() && !Controller1.ButtonRight.pressing()) {
       clawPressed = false;
     }
-    
+
     wait(20, msec);
   }
 }
