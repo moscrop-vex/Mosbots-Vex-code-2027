@@ -3,7 +3,7 @@
 /*    Module:       main.cpp                                                  */
 /*    Author:       errortoast                                                */
 /*    Created:      10/2/2026, 2:26:42 PM                                     */
-/*    Description:  V5 project                                                */
+/*    Description:  V5 project - Robot Henry                                   */
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
@@ -15,123 +15,150 @@ using namespace vex;
 brain Brain;
 controller Controller1 = controller(primary);
 
-// A global instance of competition
+// competition instance
 competition Competition;
 
 // PIN DEFINITIONS
+int leftSideMotorPort1 = 1;   // Left side motor 1
+int rightSideMotorPort1 = 2;  // Right side motor 1
+int leftSideMotorPort2 = 9;   // Left side motor 2
+int rightSideMotorPort2 = 10; // Right side motor 2
+int rightLiftPin = 6;         // Right side lift
+int leftLiftPin = 7;          // Left side lift
+int clawUpDownPin = 3;        // Claw up/down
+int intakePin = 8;            // Intake motor
 
-int intakeMotorPort = 8;  // Intake motor port
-int liftMotorPort = 7;    // Lift motor port
-int pneumaticPort = 1;    // Pneumatic solenoid port on the brain
+// Motor definitions
+motor DriveLeft1(leftSideMotorPort1, false);
+motor DriveRight1(rightSideMotorPort1, true);
+motor DriveLeft2(leftSideMotorPort2, false);
+motor DriveRight2(rightSideMotorPort2, true);
 
-int intakeSpeed = 80;     // Intake speed percentage
-int liftSpeed = 40;       // Lift speed percentage
+motor RightLift(rightLiftPin);
+motor LeftLift(leftLiftPin);
 
-bool intakeReversed = false;      // Intake direction flag
-bool liftLeftReversed = false;    // Lift direction flag
-bool liftRightReversed = false;   // Lift direction flag
+// Claw motor on port 3 (replacing three_wire)
+motor ClawMotor(clawUpDownPin);
 
-// DEVICES
-motor Intake(intakeMotorPort, gearSetting::ratio18_1, intakeReversed);
-motor liftLeft(liftMotorPort, gearSetting::ratio18_1, liftLeftReversed);
-motor liftRight(liftMotorPort, gearSetting::ratio18_1, liftRightReversed);
-digital_out Pneumatics(Brain.ThreeWirePort.A);
+// Motor speed constants
+int driveSpeed = 75;
+int liftSpeed = 60;
+int intakeSpeed = 80;
+int clawSpeed = 40;
 
-// define your global instances of motors and other devices here
+// Claw state
+bool clawOpen = false;
+bool clawPressed = false;
 
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
-/*                                                                           */
-/*  You may want to perform some actions before the competition starts.      */
-/*  Do them in the following function.  You must return from this function   */
-/*  or the autonomous and usercontrol tasks will not be started.  This       */
-/*  function is only called once after the V5 has been powered on and        */
-/*  not every time that the robot is disabled.                               */
 /*---------------------------------------------------------------------------*/
 
 void pre_auton(void) {
-
-  // All activities that occur before the competition starts
-  // Example: clearing encoders, setting servo positions, ...
-  Intake.setStopping(brakeType::coast);
-  liftLeft.setStopping(brakeType::hold);
-  liftRight.setStopping(brakeType::hold);
-  Pneumatics.set(false);
+  DriveLeft1.setStopping(brakeType::brake);
+  DriveRight1.setStopping(brakeType::brake);
+  DriveLeft2.setStopping(brakeType::brake);
+  DriveRight2.setStopping(brakeType::brake);
+  
+  LeftLift.setStopping(vex::brakeType::brake);
+  RightLift.setStopping(vex::brakeType::brake);
+  
+  ClawMotor.setStopping(brakeType::brake);
 }
 
 /*---------------------------------------------------------------------------*/
-/*                                                                           */
 /*                              Autonomous Task                              */
-/*                                                                           */
-/*  This task is used to control your robot during the autonomous phase of   */
-/*  a VEX Competition.                                                       */
-/*                                                                           */
-/*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
-  // ..........................................................................
-  // Insert autonomous user code here.
-  // ..........................................................................
 }
 
 /*---------------------------------------------------------------------------*/
-/*                                                                           */
 /*                              User Control Task                            */
-/*                                                                           */
-/*  This task is used to control your robot during the user control phase of */
-/*  a VEX Competition.                                                       */
-/*                                                                           */
-/*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
 void usercontrol(void) {
   while (true) {
-
-    // Intake
+    // Drive control - right stick up/down for forward/back, left stick left/right to turn
+    int driveY = Controller1.Axis3.position();
+    int turnX = Controller1.Axis2.position();
+    
+    double leftSpeed = driveY + turnX;
+    double rightSpeed = driveY - turnX;
+    
+    DriveLeft1.spin(directionType::fwd, leftSpeed * 0.85, velocityUnits::pct);
+    DriveLeft2.spin(directionType::fwd, leftSpeed * 0.85, velocityUnits::pct);
+    DriveRight1.spin(directionType::fwd, rightSpeed * 0.85, velocityUnits::pct);
+    DriveRight2.spin(directionType::fwd, rightSpeed * 0.85, velocityUnits::pct);
+    
+    // Lift control - R1 up, R2 down
     if (Controller1.ButtonR1.pressing()) {
-      Intake.spin(directionType::fwd, intakeSpeed, velocityUnits::pct);
+      LeftLift.spin(directionType::fwd, liftSpeed, velocityUnits::pct);
+      RightLift.spin(directionType::fwd, liftSpeed, velocityUnits::pct);
     } else if (Controller1.ButtonR2.pressing()) {
-      Intake.spin(directionType::rev, intakeSpeed, velocityUnits::pct);
+      LeftLift.spin(directionType::rev, liftSpeed, velocityUnits::pct);
+      RightLift.spin(directionType::rev, liftSpeed, velocityUnits::pct);
     } else {
-      Intake.stop();
+      LeftLift.stop();
+      RightLift.stop();
     }
-
-    // Two-motor cascade lift
+    
+    // Intake control - L1 intake in, L2 intake out
     if (Controller1.ButtonL1.pressing()) {
-      liftLeft.spin(directionType::fwd, liftSpeed, velocityUnits::pct);
-      liftRight.spin(directionType::fwd, liftSpeed, velocityUnits::pct);
+      DriveLeft1.spin(directionType::fwd, intakeSpeed, velocityUnits::pct);
+      DriveRight1.spin(directionType::rev, intakeSpeed, velocityUnits::pct);
     } else if (Controller1.ButtonL2.pressing()) {
-      liftLeft.spin(directionType::rev, liftSpeed, velocityUnits::pct);
-      liftRight.spin(directionType::rev, liftSpeed, velocityUnits::pct);
+      DriveLeft1.spin(directionType::rev, intakeSpeed, velocityUnits::pct);
+      DriveRight1.spin(directionType::fwd, intakeSpeed, velocityUnits::pct);
     } else {
-      liftLeft.stop(brakeType::hold);
-      liftRight.stop(brakeType::hold);
+      DriveLeft1.stop();
+      DriveRight1.stop();
     }
-
-    // Pneumatic actuator
+    
+    // Side lift control - A left side up, B right side up, X left down, Y right down
     if (Controller1.ButtonA.pressing()) {
-      Pneumatics.set(true);
-    } else if (Controller1.ButtonB.pressing()) {
-      Pneumatics.set(false);
+      LeftLift.spin(directionType::fwd, liftSpeed, velocityUnits::pct);
+    } else if (Controller1.ButtonX.pressing()) {
+      LeftLift.spin(directionType::rev, liftSpeed, velocityUnits::pct);
+    } else {
+      LeftLift.stop();
     }
-
+    
+    if (Controller1.ButtonB.pressing()) {
+      RightLift.spin(directionType::fwd, liftSpeed, velocityUnits::pct);
+    } else if (Controller1.ButtonY.pressing()) {
+      RightLift.spin(directionType::rev, liftSpeed, velocityUnits::pct);
+    } else {
+      RightLift.stop();
+    }
+    
+    // Claw control - left stick up/down for claw, left bumper toggle open/close
+    if (Controller1.Axis2.position() < -20) {
+      ClawMotor.spin(directionType::fwd, clawSpeed, velocityUnits::pct);
+    } else if (Controller1.Axis2.position() > 20) {
+      ClawMotor.spin(directionType::rev, clawSpeed, velocityUnits::pct);
+    } else if (Controller1.ButtonL1.pressing() && !clawPressed) {
+      clawOpen = !clawOpen;
+      clawPressed = true;
+      wait(300, msec);
+      ClawMotor.spin(directionType::fwd, 50, velocityUnits::pct);
+      wait(300, msec);
+      ClawMotor.stop();
+    } else if (!Controller1.ButtonL1.pressing()) {
+      clawPressed = false;
+    } else {
+      ClawMotor.stop();
+    }
+    
     wait(20, msec);
   }
 }
 
-//
-// Main will set up the competition functions and callbacks.
-//
 int main() {
-  // Set up callbacks for autonomous and driver control periods.
   Competition.autonomous(autonomous);
   Competition.drivercontrol(usercontrol);
-
-  // Run the pre-autonomous function.
   pre_auton();
-
-  // Prevent main from exiting with an infinite loop.
+  
   while (true) {
     wait(100, msec);
   }
