@@ -7,12 +7,12 @@
 /*                                                                            */
 /*----------------------------------------------------------------------------*/
 
-#include "vex.h"
+#include <vex.h>
 
 using namespace vex;
 
 // vex system devices
-Brain Brain;
+brain Brain;
 controller Controller1 = controller(primary);
 
 // A global instance of competition
@@ -20,8 +20,8 @@ competition Competition;
 
 // PIN DEFINITIONS
 
-int intakeMotorPort = 1;  // Intake motor port
-int liftMotorPort = 2;    // Lift motor port
+int intakeMotorPort = 8;  // Intake motor port
+int liftMotorPort = 7;    // Lift motor port
 int pneumaticPort = 1;    // Pneumatic solenoid port on the brain
 
 int intakeSpeed = 80;     // Intake speed percentage
