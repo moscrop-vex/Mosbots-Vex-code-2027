@@ -34,12 +34,12 @@ motor IntakeMotor(vex::PORT8, vex::ratio6_1, false);       // intake (blue 600rp
 motor ClawUpDownMotor(vex::PORT3, vex::ratio36_1, false);  // claw up/down (red 100rpm)
 
 // Claw open/close servo on three wire port H
-servo ClawServo(Brain.ThreeWirePort.H);
+servo ClawServo(Brain.ThreeWirePort.A);
 
 constexpr double kDriveDeadband = 8.0;
 constexpr double kDriveScale = 0.85;
 constexpr int kDriveMaxPct = 100;
-
+  
 inline double clampPct(double value) {
   if (value > kDriveMaxPct) {
     return kDriveMaxPct;
