@@ -86,6 +86,10 @@ inline void setLiftMotor(motor &motorRef, bool up, bool down, int speed) {
 bool clawOpen = false;
 bool clawPressed = false;
 
+// Drive state
+bool slowModeEnabled = false;
+bool slowModePressed = false;
+
 /*---------------------------------------------------------------------------*/
 /*                          Pre-Autonomous Functions                         */
 /*---------------------------------------------------------------------------*/
@@ -120,9 +124,15 @@ void usercontrol(void) {
     // Use the right stick for forward/back and the left stick for turning.
     int driveY = Controller1.Axis3.position();
     int turnX = Controller1.Axis1.position();
-    bool slowMode = Controller1.ButtonX.pressing();
 
-    driveTank(driveY, turnX, slowMode);
+    if (Controller1.ButtonRight.pressing() && !slowModePressed) {
+      slowModePressed = true;
+      slowModeEnabled = !slowModeEnabled;
+    } else if (!Controller1.ButtonRight.pressing()) {
+      slowModePressed = false;
+    }
+
+    driveTank(driveY, turnX, slowModeEnabled);
 
     bool leftUp = Controller1.ButtonR1.pressing() || Controller1.ButtonA.pressing();
     bool leftDown = Controller1.ButtonR2.pressing();
@@ -148,11 +158,7 @@ void usercontrol(void) {
       ClawUpDownMotor.stop(brakeType::hold);
     }
 
-    if (Controller1.ButtonRight.pressing()) {
-      clawOpen = true;
-      ClawPiston.open();
-      clawPressed = false;
-    } else if (Controller1.ButtonLeft.pressing() && !clawPressed) {
+    if (Controller1.ButtonLeft.pressing() && !clawPressed) {
       clawPressed = true;
       clawOpen = !clawOpen;
       if (clawOpen) {
@@ -160,7 +166,7 @@ void usercontrol(void) {
       } else {
         ClawPiston.close();
       }
-    } else if (!Controller1.ButtonLeft.pressing() && !Controller1.ButtonRight.pressing()) {
+    } else if (!Controller1.ButtonLeft.pressing()) {
       clawPressed = false;
     }
 
