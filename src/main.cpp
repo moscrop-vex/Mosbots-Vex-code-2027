@@ -37,8 +37,12 @@ motor ClawUpDownMotor(vex::PORT3, vex::ratio36_1, false);  // claw up/down (red 
 pneumatics ClawPiston(Brain.ThreeWirePort.A);
 
 constexpr double kDriveDeadband = 8.0;
-constexpr double kDriveScale = 0.85;
 constexpr int kDriveMaxPct = 100;
+constexpr int driveSpeed = 75;
+constexpr int slowDriveSpeed = 45;
+constexpr int liftSpeed = 60;
+constexpr int intakeSpeed = 75;
+constexpr int clawSpeed = 45;
 
 inline double clampPct(double value) {
   if (value > kDriveMaxPct) {
@@ -57,9 +61,10 @@ inline double applyDeadband(int input) {
   return static_cast<double>(input);
 }
 
-inline void driveTank(int forward, int turn) {
-  double leftSpeed = clampPct((applyDeadband(forward) + applyDeadband(turn)) * kDriveScale);
-  double rightSpeed = clampPct((applyDeadband(forward) - applyDeadband(turn)) * kDriveScale);
+inline void driveTank(int forward, int turn, bool slowMode) {
+  const double scale = slowMode ? (slowDriveSpeed / 100.0) : (driveSpeed / 100.0);
+  double leftSpeed = clampPct((applyDeadband(forward) + applyDeadband(turn)) * scale);
+  double rightSpeed = clampPct((applyDeadband(forward) - applyDeadband(turn)) * scale);
 
   DriveLeft1.spin(directionType::fwd, leftSpeed, velocityUnits::pct);
   DriveLeft2.spin(directionType::fwd, leftSpeed, velocityUnits::pct);
@@ -76,12 +81,6 @@ inline void setLiftMotor(motor &motorRef, bool up, bool down, int speed) {
     motorRef.stop();
   }
 }
-
-// Motor speed constants
-constexpr int driveSpeed = 75;
-constexpr int liftSpeed = 60;
-constexpr int intakeSpeed = 80;
-constexpr int clawSpeed = 40;
 
 // Claw state
 bool clawOpen = false;
@@ -121,11 +120,12 @@ void usercontrol(void) {
     // Use the right stick for forward/back and the left stick for turning.
     int driveY = Controller1.Axis3.position();
     int turnX = Controller1.Axis1.position();
+    bool slowMode = Controller1.ButtonX.pressing();
 
-    driveTank(driveY, turnX);
+    driveTank(driveY, turnX, slowMode);
 
     bool leftUp = Controller1.ButtonR1.pressing() || Controller1.ButtonA.pressing();
-    bool leftDown = Controller1.ButtonR2.pressing() || Controller1.ButtonX.pressing();
+    bool leftDown = Controller1.ButtonR2.pressing();
     bool rightUp = Controller1.ButtonR1.pressing() || Controller1.ButtonB.pressing();
     bool rightDown = Controller1.ButtonR2.pressing() || Controller1.ButtonY.pressing();
 
