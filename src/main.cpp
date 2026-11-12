@@ -33,13 +33,13 @@ motor LeftLift(vex::PORT7, vex::ratio18_1, false);     // left lift
 motor IntakeMotor(vex::PORT8, vex::ratio6_1, false);       // intake (blue 600rpm)
 motor ClawUpDownMotor(vex::PORT3, vex::ratio36_1, false);  // claw up/down (red 100rpm)
 
-// Claw open/close servo on three wire port H
-servo ClawServo(Brain.ThreeWirePort.A);
+// Claw open/close pnumatik on three wire port A
+pneumatics ClawPiston(Brain.ThreeWirePort.A);
 
 constexpr double kDriveDeadband = 8.0;
 constexpr double kDriveScale = 0.85;
 constexpr int kDriveMaxPct = 100;
-  
+
 inline double clampPct(double value) {
   if (value > kDriveMaxPct) {
     return kDriveMaxPct;
@@ -102,8 +102,7 @@ void pre_auton(void) {
   
   IntakeMotor.setStopping(brakeType::coast);
   ClawUpDownMotor.setStopping(brakeType::hold);
-  
-  ClawServo.setPosition(clawOpen ? 100 : 0, percentUnits::pct);
+  ClawPiston.close();
 }
 
 /*---------------------------------------------------------------------------*/
@@ -150,12 +149,16 @@ void usercontrol(void) {
 
     if (Controller1.ButtonRight.pressing()) {
       clawOpen = true;
-      ClawServo.setPosition(100, percentUnits::pct);
+      ClawPiston.open();
       clawPressed = false;
     } else if (Controller1.ButtonLeft.pressing() && !clawPressed) {
       clawPressed = true;
       clawOpen = !clawOpen;
-      ClawServo.setPosition(clawOpen ? 100 : 0, percentUnits::pct);
+      if (clawOpen) {
+        ClawPiston.open();
+      } else {
+        ClawPiston.close();
+      }
     } else if (!Controller1.ButtonLeft.pressing() && !Controller1.ButtonRight.pressing()) {
       clawPressed = false;
     }
