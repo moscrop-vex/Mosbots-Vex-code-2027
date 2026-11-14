@@ -82,6 +82,14 @@ inline void setLiftMotor(motor &motorRef, bool up, bool down, int speed) {
   }
 }
 
+inline void setClawPistonState(bool open) {
+  if (open) {
+    ClawPiston.open();
+  } else {
+    ClawPiston.close();
+  }
+}
+
 // Claw state
 bool clawOpen = false;
 bool clawPressed = false;
@@ -105,6 +113,7 @@ void pre_auton(void) {
   
   IntakeMotor.setStopping(brakeType::coast);
   ClawUpDownMotor.setStopping(brakeType::hold);
+
   ClawPiston.open();
 }
 
@@ -175,11 +184,7 @@ void usercontrol(void) {
     if (Controller1.ButtonLeft.pressing() && !clawPressed) {
       clawPressed = true;
       clawOpen = !clawOpen;
-      if (clawOpen) {
-        ClawPiston.open();
-      } else {
-        ClawPiston.close();
-      }
+      setClawPistonState(clawOpen);
     } else if (!Controller1.ButtonLeft.pressing()) {
       clawPressed = false;
     }
