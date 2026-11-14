@@ -122,8 +122,8 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
-  const int autoDriveSpeed = 50;
-  const int autoDriveTimeMs = 1500;
+  const int autoDriveSpeed = 70;
+  const int autoDriveTimeMs = 2000;  // 2 seconds
 
   DriveLeft1.spin(directionType::fwd, autoDriveSpeed, velocityUnits::pct);
   DriveLeft2.spin(directionType::fwd, autoDriveSpeed, velocityUnits::pct);
