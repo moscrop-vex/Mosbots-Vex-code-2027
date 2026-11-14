@@ -105,7 +105,7 @@ void pre_auton(void) {
   
   IntakeMotor.setStopping(brakeType::coast);
   ClawUpDownMotor.setStopping(brakeType::hold);
-  ClawPiston.close();
+  ClawPiston.open();
 }
 
 /*---------------------------------------------------------------------------*/
