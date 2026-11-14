@@ -113,6 +113,20 @@ void pre_auton(void) {
 /*---------------------------------------------------------------------------*/
 
 void autonomous(void) {
+  const int autoDriveSpeed = 50;
+  const int autoDriveTimeMs = 1500;
+
+  DriveLeft1.spin(directionType::fwd, autoDriveSpeed, velocityUnits::pct);
+  DriveLeft2.spin(directionType::fwd, autoDriveSpeed, velocityUnits::pct);
+  DriveRight1.spin(directionType::fwd, autoDriveSpeed, velocityUnits::pct);
+  DriveRight2.spin(directionType::fwd, autoDriveSpeed, velocityUnits::pct);
+
+  wait(autoDriveTimeMs, msec);
+
+  DriveLeft1.stop();
+  DriveLeft2.stop();
+  DriveRight1.stop();
+  DriveRight2.stop();
 }
 
 /*---------------------------------------------------------------------------*/
