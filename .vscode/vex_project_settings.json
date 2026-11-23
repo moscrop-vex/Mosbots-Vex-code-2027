@@ -4,7 +4,7 @@
 		"json": 2
 	},
 	"project": {
-		"name": "mosbots-vex-v5-codename-henry-2027",
+		"name": "Henry",
 		"description": "VEX V5 Override code for Mosbots 2027",
 		"creationDate": "10/2/2026, 2:26:42 PM",
 		"platform": "V5",

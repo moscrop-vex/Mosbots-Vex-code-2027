@@ -78,7 +78,7 @@ inline void setLiftMotor(motor &motorRef, bool up, bool down, int speed) {
   } else if (down) {
     motorRef.spin(directionType::rev, speed, velocityUnits::pct);
   } else {
-    motorRef.stop();
+    motorRef.stop(brakeType::hold);
   }
 }
 
@@ -108,10 +108,10 @@ void pre_auton(void) {
   DriveLeft2.setStopping(brakeType::brake);
   DriveRight2.setStopping(brakeType::brake);
   
-  LeftLift.setStopping(vex::brakeType::brake);
-  RightLift.setStopping(vex::brakeType::brake);
+  LeftLift.setStopping(vex::brakeType::hold);
+  RightLift.setStopping(vex::brakeType::hold);
   
-  IntakeMotor.setStopping(brakeType::coast);
+  IntakeMotor.setStopping(brakeType::hold);
   ClawUpDownMotor.setStopping(brakeType::hold);
 
   ClawPiston.open();
@@ -170,7 +170,7 @@ void usercontrol(void) {
     } else if (Controller1.ButtonL2.pressing()) {
       IntakeMotor.spin(directionType::rev, intakeSpeed, velocityUnits::pct);
     } else {
-      IntakeMotor.stop();
+      IntakeMotor.stop(brakeType::hold);
     }
 
     if (Controller1.ButtonUp.pressing()) {
