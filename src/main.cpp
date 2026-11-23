@@ -20,18 +20,18 @@ competition Competition;
 
 // Motor definitions (vex::PORTn is zero-indexed; use the enum, never raw ints)
 // Drive
-motor DriveLeft1(vex::PORT1, vex::ratio18_1, false);   // left back
-motor DriveLeft2(vex::PORT9, vex::ratio18_1, false);   // left front
-motor DriveRight1(vex::PORT2, vex::ratio18_1, true);   // right back
-motor DriveRight2(vex::PORT10, vex::ratio18_1, true);  // right front
+motor DriveLeft1(vex::PORT15, vex::ratio18_1, false);   // left back
+motor DriveLeft2(vex::PORT13, vex::ratio18_1, false);   // left front
+motor DriveRight1(vex::PORT14, vex::ratio18_1, true);   // right back
+motor DriveRight2(vex::PORT12, vex::ratio18_1, true);  // right front
 
 // Lift
-motor RightLift(vex::PORT6, vex::ratio18_1, false);    // right lift
-motor LeftLift(vex::PORT7, vex::ratio18_1, false);     // left lift
+motor RightLift(vex::PORT19, vex::ratio18_1, false);    // right lift
+motor LeftLift(vex::PORT20, vex::ratio18_1, false);     // left lift
 
 // Intake + claw up/down
-motor IntakeMotor(vex::PORT8, vex::ratio6_1, false);       // intake (blue 600rpm)
-motor ClawUpDownMotor(vex::PORT3, vex::ratio36_1, false);  // claw up/down (red 100rpm)
+motor IntakeMotor(vex::PORT17, vex::ratio6_1, false);       // intake (blue 600rpm)
+motor ClawUpDownMotor(vex::PORT18, vex::ratio36_1, false);  // claw up/down (red 100rpm)
 
 // Claw open/close pnumatik on three wire port A
 pneumatics ClawPiston(Brain.ThreeWirePort.A);
