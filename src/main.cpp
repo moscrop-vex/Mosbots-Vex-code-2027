@@ -94,6 +94,11 @@ inline void setClawPistonState(bool open) {
 bool clawOpen = false;
 bool clawPressed = false;
 
+// Claw pitch debounce: ignore a brief opposite-direction signal at the start of a press
+constexpr int kClawPitchDebounceSamples = 3;
+int clawPitchUpSamples = 0;
+int clawPitchDownSamples = 0;
+
 // Drive state
 bool slowModeEnabled = false;
 bool slowModePressed = false;
@@ -173,9 +178,16 @@ void usercontrol(void) {
       IntakeMotor.stop(brakeType::hold);
     }
 
-    if (Controller1.ButtonUp.pressing()) {
+    // Debounce the pitch buttons so a brief bounce/crosstalk cannot flip direction
+    clawPitchUpSamples = Controller1.ButtonUp.pressing() ? clawPitchUpSamples + 1 : 0;
+    clawPitchDownSamples = Controller1.ButtonDown.pressing() ? clawPitchDownSamples + 1 : 0;
+
+    bool pitchUp = clawPitchUpSamples >= kClawPitchDebounceSamples;
+    bool pitchDown = clawPitchDownSamples >= kClawPitchDebounceSamples;
+
+    if (pitchUp) {
       ClawUpDownMotor.spin(directionType::fwd, clawSpeed, velocityUnits::pct);
-    } else if (Controller1.ButtonDown.pressing()) {
+    } else if (pitchDown) {
       ClawUpDownMotor.spin(directionType::rev, clawSpeed, velocityUnits::pct);
     } else {
       ClawUpDownMotor.stop(brakeType::hold);
